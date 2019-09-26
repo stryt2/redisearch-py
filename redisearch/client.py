@@ -39,10 +39,10 @@ class TextField(Field):
     def __init__(self, name, weight=1.0, sortable=False, no_stem=False,
                  no_index=False):
         args = [Field.TEXT, Field.WEIGHT, weight]
-        if sortable:
-            args.append(Field.SORTABLE)
         if no_stem:
             args.append(self.NOSTEM)
+        if sortable:
+            args.append(Field.SORTABLE)
         if no_index:
             args.append(self.NOINDEX)
 
@@ -84,13 +84,15 @@ class TagField(Field):
     See http://redisearch.io/Tags/
     """
     def __init__(self, name, separator = ',', no_index=False):
-        Field.__init__(self, name, Field.TAG)
+        args = [Field.TAG]
         if separator != ',':
-            self.args.append(Field.SEPARATOR)
-            self.args.append(separator)
+            args.append(Field.SEPARATOR)
+            args.append(separator)
 
         if no_index:
-            self.args.append(Field.NOINDEX)
+            args.append(Field.NOINDEX)
+
+        super(TagField, self).__init__(name, *args)
     
 
 class Client(object):
@@ -271,6 +273,10 @@ class Client(object):
         Load a single document by id
         """
         fields = self.redis.hgetall(id)
+
+        if len(fields) == 0:
+            return None
+
         if six.PY3:
             f2 = {to_string(k): to_string(v) for k, v in fields.items()}
             fields = f2
